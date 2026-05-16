@@ -1,0 +1,9 @@
+# Optional repo whitelist. If present and non-empty, Scraper only targets these repos.
+# Leave empty to use open GitHub search (default).
+repos: []
+# repos:
+#   - psf/requests
+#   - encode/httpx
+#   - Textualize/rich
+#   - tiangolo/fastapi
+#   - pallets/click

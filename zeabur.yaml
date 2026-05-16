@@ -1,0 +1,13 @@
+name: bounty-hunter
+services:
+  - name: bounty-hunter
+    type: git
+    build:
+      type: docker
+      dockerfile: Dockerfile
+    ports:
+      - port: 8080
+        type: http
+    env:
+      PORT: "8080"
+      MOCK_MODE: "false"

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Bounty Hunter // Agent Forge</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0d1117; color: #c9d1d9; font-family: 'Courier New', monospace; height: 100vh; display: flex; flex-direction: column; }
+  #header { background: #161b22; border-bottom: 1px solid #30363d; padding: 12px 20px; display: flex; align-items: center; gap: 16px; }
+  #header h1 { color: #58a6ff; font-size: 14px; letter-spacing: 2px; }
+  #run-id { color: #8b949e; font-size: 12px; }
+  #status { margin-left: auto; font-size: 12px; }
+  #status.connected { color: #3fb950; }
+  #status.disconnected { color: #f85149; }
+  #terminal { flex: 1; overflow-y: auto; padding: 16px 20px; }
+  .line { display: flex; gap: 12px; padding: 2px 0; font-size: 13px; line-height: 1.6; }
+  .ts { color: #484f58; min-width: 70px; }
+  .agent { min-width: 90px; font-weight: bold; }
+  .agent.SCRAPER { color: #79c0ff; }
+  .agent.ANALYST { color: #d2a8ff; }
+  .agent.PATCHER { color: #ffa657; }
+  .agent.VERIFIER { color: #3fb950; }
+  .agent.PR_OPENER { color: #f778ba; }
+  .agent.MEMORY { color: #e3b341; }
+  .agent.COMPLETE { color: #3fb950; }
+  .agent.ERROR { color: #f85149; }
+  .agent.ORCHESTRATOR { color: #8b949e; }
+  .msg { flex: 1; color: #c9d1d9; }
+  .msg .tick { color: #3fb950; }
+  .msg .cross { color: #f85149; }
+  #footer { background: #161b22; border-top: 1px solid #30363d; padding: 12px 20px; display: flex; gap: 12px; align-items: center; }
+  #trigger-btn { background: #238636; color: #fff; border: none; padding: 8px 18px; border-radius: 6px; font-family: inherit; font-size: 13px; cursor: pointer; letter-spacing: 1px; }
+  #trigger-btn:hover { background: #2ea043; }
+  #trigger-btn:disabled { background: #21262d; color: #484f58; cursor: not-allowed; }
+  #past-runs { color: #58a6ff; font-size: 13px; cursor: pointer; text-decoration: underline; background: none; border: none; font-family: inherit; }
+</style>
+</head>
+<body>
+<div id="header">
+  <h1>&#x2B21; BOUNTY HUNTER // AGENT-FORGE</h1>
+  <span id="run-id">run: &#8212;</span>
+  <span id="status" class="disconnected">&#9679; DISCONNECTED</span>
+</div>
+<div id="terminal"></div>
+<div id="footer">
+  <button id="trigger-btn" onclick="triggerRun()">&#9654; TRIGGER NEW RUN</button>
+  <button id="past-runs" onclick="alert('Run history via Butterbase coming soon')">View Past Runs &#8599;</button>
+</div>
+<script>
+const terminal = document.getElementById('terminal');
+const statusEl = document.getElementById('status');
+const runIdEl = document.getElementById('run-id');
+const triggerBtn = document.getElementById('trigger-btn');
+
+function appendLine(agent, message, ts) {
+  const line = document.createElement('div');
+  line.className = 'line';
+  const safeMsg = message
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/✓/g, '<span class="tick">✓</span>')
+    .replace(/✗/g, '<span class="cross">✗</span>');
+  const agentClass = agent.replace(/[^A-Z_]/g, '');
+  line.innerHTML = `<span class="ts">[${ts}]</span><span class="agent ${agentClass}">${agent.padEnd(11)}</span><span class="msg">&blacktriangleright;  ${safeMsg}</span>`;
+  terminal.appendChild(line);
+  terminal.scrollTop = terminal.scrollHeight;
+}
+
+function connect() {
+  const es = new EventSource('/stream');
+  es.onopen = () => {
+    statusEl.textContent = '● CONNECTED';
+    statusEl.className = 'connected';
+  };
+  es.onerror = () => {
+    statusEl.textContent = '● DISCONNECTED';
+    statusEl.className = 'disconnected';
+    setTimeout(connect, 3000);
+    es.close();
+  };
+  es.onmessage = (e) => {
+    const data = JSON.parse(e.data);
+    if (data.ping) return;
+    if (data.run_id) runIdEl.textContent = `run: ${data.run_id}`;
+    appendLine(data.agent || 'SYSTEM', data.message || '', data.timestamp || '--:--:--');
+  };
+}
+
+async function triggerRun() {
+  triggerBtn.disabled = true;
+  triggerBtn.textContent = '⟳ RUNNING...';
+  try {
+    const r = await fetch('/trigger', { method: 'POST' });
+    const d = await r.json();
+    runIdEl.textContent = `run: ${d.run_id}`;
+  } catch (err) {
+    appendLine('ERROR', `Trigger failed: ${err}`, '--:--:--');
+  } finally {
+    setTimeout(() => {
+      triggerBtn.disabled = false;
+      triggerBtn.textContent = '▶ TRIGGER NEW RUN';
+    }, 60000);
+  }
+}
+
+connect();
+</script>
+</body>
+</html>
