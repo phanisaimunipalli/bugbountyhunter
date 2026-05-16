@@ -56,17 +56,18 @@ class ScraperAgent:
         if self.mock_mode:
             return list(MOCK_SCRAPER_RESULT)
 
-        proxy_url = (
-            f"http://{settings.bright_data_username}:{settings.bright_data_password}"
-            f"@{settings.bright_data_host}:{settings.bright_data_port}"
-        )
-        proxies = {"http://": proxy_url, "https://": proxy_url}
-        url = f"https://api.github.com/search/issues?q={query}+state:open&sort=created&order=desc&per_page=20"
+        # Bright Data Web Unlocker API — Bearer token auth, routes through their network
+        github_url = f"https://api.github.com/search/issues?q={query}+state:open&sort=created&order=desc&per_page=20"
         headers = {
             "Authorization": f"token {settings.github_token}",
             "Accept": "application/vnd.github.v3+json",
+            "x-brightdata-token": settings.bright_data_api_key,
         }
-        resp = httpx.get(url, headers=headers, proxies=proxies, timeout=15)
+        resp = httpx.get(
+            github_url,
+            headers=headers,
+            timeout=20,
+        )
         resp.raise_for_status()
         items = resp.json().get("items", [])
         return [

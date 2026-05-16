@@ -4,8 +4,7 @@ from typing import Optional
 
 class Settings(BaseSettings):
     agentfield_api_key: str = "mock"
-    bright_data_username: str = "mock"
-    bright_data_password: str = "mock"
+    bright_data_api_key: str = "mock"
     bright_data_host: str = "brd.superproxy.io"
     bright_data_port: int = 22225
     actionbook_api_key: str = "mock"
@@ -16,7 +15,7 @@ class Settings(BaseSettings):
     qoder_api_key: str = "mock"
     qoder_base_url: str = "https://api.qoder.ai/v1"
     tokenrouter_api_key: str = "mock"
-    tokenrouter_base_url: str = "https://api.tokenrouter.ai/v1"
+    tokenrouter_base_url: str = "https://api.tokenrouter.com/v1"
     evermind_api_key: str = "mock"
     evermind_base_url: str = "https://api.evermind.ai/v1"
     nosana_api_key: str = "mock"
