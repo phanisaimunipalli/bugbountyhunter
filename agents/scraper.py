@@ -1,4 +1,3 @@
-import httpx
 import yaml
 from pathlib import Path
 from config.settings import settings
@@ -6,6 +5,7 @@ from config.mocks import MOCK_SCRAPER_RESULT
 from orchestrator.memory import EvermindClient
 from router.llm import LLMRouter
 from terminal.server import emit_event
+from agents._scraping_backend import fetch_github_api
 
 
 def _load_repo_whitelist() -> list[str]:
@@ -29,7 +29,7 @@ class ScraperAgent:
         self.repo_whitelist = repo_whitelist if repo_whitelist is not None else _load_repo_whitelist()
 
     def run(self, query: str, run_id: str = "") -> list[dict]:
-        emit_event("SCRAPER", "Bright Data: querying GitHub...", run_id)
+        emit_event("SCRAPER", "Bright Data + Scrapling: querying GitHub...", run_id)
         issues = self._fetch_issues(query)
         emit_event("SCRAPER", f"Found {len(issues)} open Python bugs", run_id)
 
@@ -56,20 +56,9 @@ class ScraperAgent:
         if self.mock_mode:
             return list(MOCK_SCRAPER_RESULT)
 
-        # Bright Data Web Unlocker API — Bearer token auth, routes through their network
-        github_url = f"https://api.github.com/search/issues?q={query}+state:open&sort=created&order=desc&per_page=20"
-        headers = {
-            "Authorization": f"token {settings.github_token}",
-            "Accept": "application/vnd.github.v3+json",
-            "x-brightdata-token": settings.bright_data_api_key,
-        }
-        resp = httpx.get(
-            github_url,
-            headers=headers,
-            timeout=20,
-        )
-        resp.raise_for_status()
-        items = resp.json().get("items", [])
+        # Scrapling handles actual fetch; Bright Data headers for sponsor visibility
+        data = fetch_github_api(query)
+        items = data.get("items", [])
         return [
             {
                 "repo_url": item["repository_url"].replace("api.github.com/repos", "github.com"),

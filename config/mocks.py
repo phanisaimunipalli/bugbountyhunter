@@ -70,3 +70,26 @@ MOCK_PR_RESULT = {
 }
 
 MOCK_EVERMIND_MEMORY: dict = {}
+
+MOCK_SECURITY_RESULT = {
+    "findings": [
+        {
+            "vuln_class": "injection",
+            "severity": "high",
+            "file": "requests/models.py",
+            "line_hint": "897-900",
+            "description": (
+                "Unhandled JSONDecodeError leaks internal parsing state "
+                "to callers, potentially exposing raw response data in tracebacks."
+            ),
+            "proof_of_concept": "r = requests.get(url_with_invalid_json); r.json()",
+            "fix_suggestion": (
+                "Catch json.JSONDecodeError and re-raise as library-specific "
+                "exception with sanitized message."
+            ),
+            "confidence": 0.88,
+        }
+    ],
+    "total_vulns": 1,
+    "severity_summary": {"critical": 0, "high": 1, "medium": 0, "low": 0},
+}
