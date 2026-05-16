@@ -7,6 +7,8 @@ from dataclasses import dataclass, field
 
 import git
 
+_IS_WINDOWS = sys.platform == "win32"
+
 
 @dataclass
 class SandboxRunner:
@@ -42,8 +44,12 @@ class SandboxRunner:
         if not venv_dir.exists():
             subprocess.run([sys.executable, "-m", "venv", str(venv_dir)], check=True)
 
-        pip = venv_dir / "bin" / "pip"
-        python = venv_dir / "bin" / "python"
+        if _IS_WINDOWS:
+            pip = venv_dir / "Scripts" / "pip.exe"
+            python = venv_dir / "Scripts" / "python.exe"
+        else:
+            pip = venv_dir / "bin" / "pip"
+            python = venv_dir / "bin" / "python"
 
         repo = Path(repo_path)
         if (repo / "pyproject.toml").exists() or (repo / "setup.py").exists():
@@ -61,7 +67,8 @@ class SandboxRunner:
             )
 
         result = subprocess.run(
-            [str(python), "-m", "pytest", "--tb=short", "-q", repo_path],
+            [str(python), "-m", "pytest", "--tb=short", "-q", "."],
+            cwd=repo_path,
             capture_output=True,
             text=True,
             timeout=timeout,

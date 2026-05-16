@@ -64,4 +64,4 @@ async def trigger_run():
 @app.get("/")
 async def root():
     html_path = Path(__file__).parent / "static" / "index.html"
-    return HTMLResponse(html_path.read_text())
+    return HTMLResponse(html_path.read_text(encoding="utf-8"))
